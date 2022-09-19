@@ -85,6 +85,28 @@ Options
 
 ###   1.js entry and html entry
 
+
+
+```
+HTML Entry` 是由 `import-html-entry` 库实现的，通过 `http` 请求加载指定地址的首屏内容即 `html` 页面，然后解析这个 `html` 模版得到 `template`, `scripts` , `entry`, `styles
+```
+
+
+
+```
+{
+  template: 经过处理的脚本，link、script 标签都被注释掉了,
+  scripts: [脚本的http地址 或者 { async: true, src: xx } 或者 代码块],
+  styles: [样式的http地址],
+ 	entry: 入口脚本的地址，要不是标有 entry 的 script 的 src，要不就是最后一个 script 标签的 src
+}
+
+```
+
+
+
+
+
 qiankun通过`importEntry`解析html文件，再去加载对应这个html上面的script and style
 
 可以看看源码
@@ -778,7 +800,7 @@ function func() {
     for (var i = 0; i < 100000; i++) {
         var v = obj.a[0];
     }
-    console.timeEnd("func");//0.847ms
+    console.timeEnd("func");//1.447021484375 ms
 }
 func();
 
@@ -792,11 +814,35 @@ function funcWith() {
             var v = a[0];
         }
     }
-    console.timeEnd("funcWith");//88.260ms
+    console.timeEnd("funcWith"); // 47.47900390625 ms
 }
 funcWith();
+
+
+  function funcWith() {
+    console.time("funcWith");
+    var obj = {
+        a: [1, 2, 3]
+    };
+    obj.__obj = obj;
+    obj.proxyWindow = obj;
+    with (obj.__obj) {
+      (function(a){
+      for (var i = 0; i < 100000; i++) {
+            var v = a[0];
+        }
+      }).call(proxyWindow, a);
+    }
+    console.timeEnd("funcWith"); //1.567138671875 ms
+  }
+  funcWith();
+
 ```
 
 
 
 这里**JavaScript 引擎会在编译阶段进行性能优化**。其中有些优化依赖于能够根据代码的词法进行静态分析，并预先确定所有变量和函数的定义位置，才能在执行过程中快速找到标识符。
+
+
+
+我们可以手动去做缓存，提高速度。
